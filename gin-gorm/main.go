@@ -1,19 +1,26 @@
 package main
 
 import (
-	// "log"
+	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
+	"github.com/tanimutomo/go-samples/gin-gorm/crypto"
 )
 
 // Declare tweet model
 type Tweet struct {
 	gorm.Model
 	Content string `json:"content" binding:"required"`
+}
+
+type User struct {
+	gorm.Model
+	Username string `json:"username" binding:"required" gorm:"unique;not null"`
+	Password string `json:"password" binding:"required"`
 }
 
 func gormConnect() *gorm.DB {
@@ -38,6 +45,7 @@ func dbInit() {
 
 	defer db.Close()
 	db.AutoMigrate(&Tweet{})
+	db.AutoMigrate(&User{})
 }
 
 // Insert data
@@ -88,10 +96,73 @@ func dbDelete(id int) {
 	db.Close()
 }
 
+// Register a new user
+func createUser(username string, password string) []error {
+	passwordEncrypt, _ := crypto.PasswordEncrypt(password)
+	db := gormConnect()
+	defer db.Close()
+	// Insert a new user to db
+	if err := db.Create(
+		&User{Username: username, Password: passwordEncrypt},
+	).GetErrors(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Find a user
+func getUser(username string) User {
+	db := gormConnect()
+	var user User
+	db.First(&user, "username = ?", username)
+	db.Close()
+	return user
+}
+
 func main() {
 	r := gin.Default()
 
 	dbInit()
+
+	// Signup
+	r.POST("/signup", func(c *gin.Context) {
+		var user User
+		// Validation
+		log.Print("PostForm:", c.PostForm("Username"))
+		if err := c.Bind(&user); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"Error": err})
+		} else {
+			username := user.Username
+			password := user.Password
+			// Check same username exists
+			if err := createUser(username, password); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"Error": err})
+			} else {
+				c.JSON(http.StatusFound, gin.H{"message": "Success to signup"})
+			}
+		}
+	})
+
+	// Login
+	r.POST("/login", func(c *gin.Context) {
+		var user User
+		if err := c.Bind(&user); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"Error": err})
+		} else {
+			// Get hashed password
+			dbPassword := getUser(user.Username).Password
+			log.Println(dbPassword)
+			sentPassword := user.Password
+			// Compare user sent password to db password
+			if err := crypto.CompareHashAndPassword(dbPassword, sentPassword); err != nil {
+				log.Println("Failed to login")
+				c.JSON(http.StatusBadRequest, gin.H{"Error": err})
+			} else {
+				log.Println("Success to login")
+				c.JSON(http.StatusFound, gin.H{"message": "Success to login"})
+			}
+		}
+	})
 
 	// Get a list of tweets
 	r.GET("/tweets", func(c *gin.Context) {
