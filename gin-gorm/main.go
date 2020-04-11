@@ -3,11 +3,14 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
+	"github.com/joho/godotenv"
+	_ "github.com/joho/godotenv/autoload"
 	"github.com/tanimutomo/go-samples/gin-gorm/crypto"
 )
 
@@ -24,10 +27,14 @@ type User struct {
 }
 
 func gormConnect() *gorm.DB {
-	DBMS := "mysql"
-	USER := "test"
-	PASS := "12345678"
-	DBNAME := "test"
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+	DBMS := os.Getenv("mytweet_DBMS")
+	USER := os.Getenv("mytweet_USER")
+	PASS := os.Getenv("mytweet_PASS")
+	DBNAME := os.Getenv("mytweet_DBNAME")
 	// postfix 'parse...' for charcode of mysql
 	CONNECT := USER + ":" + PASS + "@/" + DBNAME + "?parseTime=true"
 	db, err := gorm.Open(DBMS, CONNECT)
@@ -128,14 +135,11 @@ func main() {
 	r.POST("/signup", func(c *gin.Context) {
 		var user User
 		// Validation
-		log.Print("PostForm:", c.PostForm("Username"))
 		if err := c.Bind(&user); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Error": err})
 		} else {
-			username := user.Username
-			password := user.Password
 			// Check same username exists
-			if err := createUser(username, password); err != nil {
+			if err := createUser(user.Username, user.Password); len(err) != 0 {
 				c.JSON(http.StatusBadRequest, gin.H{"Error": err})
 			} else {
 				c.JSON(http.StatusFound, gin.H{"message": "Success to signup"})
