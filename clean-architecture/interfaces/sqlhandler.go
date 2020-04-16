@@ -3,7 +3,7 @@ package interfaces
 import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/tanimutomo/gin-api-server-ja-tutorials/clean-architecture/src/app/interfaces/database"
+	"github.com/tanimutomo/go-samples/clean-architecture/src/app/interfaces/database"
 )
 
 type SqlHandler struct {

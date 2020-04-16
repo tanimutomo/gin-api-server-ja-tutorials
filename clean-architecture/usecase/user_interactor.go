@@ -1,6 +1,6 @@
 package usecase
 
-import "github.com/tanimutomo/gin-api-server-ja-tutorials/clean-architecture/src/app/domain"
+import "github.com/tanimutomo/go-samples/clean-architecture/src/app/domain"
 
 type UserInteractor struct {
 	UserRepository UserRepository

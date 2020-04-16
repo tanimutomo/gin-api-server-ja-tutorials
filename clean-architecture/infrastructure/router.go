@@ -2,7 +2,7 @@ package infrastructure
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/tanimutomo/gin-api-server-ja-tutorials/clean-architecture/src/app/interfaces/controllers"
+	"github.com/tanimutomo/go-samples/clean-architecture/src/app/interfaces/controllers"
 )
 
 var Router *gin.Engine
