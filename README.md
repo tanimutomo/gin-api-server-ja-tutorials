@@ -19,3 +19,6 @@
 
 - clean-architecture
   - [Clean ArchitectureでAPI Serverを構築してみる](https://qiita.com/hirotakan/items/698c1f5773a3cca6193e)
+
+- clean-architecture-2
+  - [Clean Architecture を用いた go + gin のバックエンド (API) 構築](http://psychedelicnekopunch.com/archives/1308)
